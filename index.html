@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gentrification Indicators</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #fff; color: #111; }
+
+    /* Background layer with the scattered indicators */
+    #cloud { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+    #cloud span {
+      position: absolute; white-space: nowrap; color: #888; font-size: 15px;
+      transform: translate(-50%, -50%);
+    }
+    #cloud span.new { color: #111; }
+
+    /* Foreground form */
+    main { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    form { width: 100%; max-width: 420px; background: #fff; border: 1px solid #ccc; padding: 20px; }
+    label { display: block; font-size: 18px; margin-bottom: 12px; }
+    input { width: 100%; font-size: 18px; padding: 12px; border: 1px solid #999; }
+    button { width: 100%; margin-top: 12px; font-size: 18px; padding: 12px; cursor: pointer; }
+    #status { min-height: 1.4em; margin: 12px 0 0; font-size: 15px; }
+    #status.error { color: #b00020; }
+    .small { font-size: 13px; color: #666; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div id="cloud" aria-hidden="true"></div>
+
+  <main>
+    <form id="indicator-form" autocomplete="off">
+      <label for="indicator">What is a sign of gentrification to you?</label>
+      <input id="indicator" name="indicator" type="text" required placeholder="e.g. rising rents">
+      <button type="submit">Submit</button>
+      <p id="status" role="status"></p>
+      <p class="small"><a href="map.html">Go to the map →</a></p>
+      <p class="small" id="mock-note" hidden>Demo mode: no API_URL set in config.js, nothing is saved.</p>
+    </form>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const config = window.APP_CONFIG;
+    const cloud = document.getElementById("cloud");
+    const form = document.getElementById("indicator-form");
+    const input = document.getElementById("indicator");
+    const statusEl = document.getElementById("status");
+
+    input.maxLength = config.MAX_INDICATOR_LENGTH;
+    document.getElementById("mock-note").hidden = !Api.useMock;
+
+    // Indicators currently shown, keyed by normalized text.
+    const shown = new Map();
+
+    // Deterministic pseudo-random number from a string, so each word keeps
+    // the same position across reloads instead of jumping around.
+    function hash(str, seed) {
+      let h = seed >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
+        h ^= h >>> 13;
+      }
+      return (h >>> 0) / 4294967295;
+    }
+
+    function addToCloud(text, highlight) {
+      const key = Api.normalize(text);
+      if (!key || shown.has(key)) return;
+      const span = document.createElement("span");
+      span.textContent = text; // textContent, never innerHTML: input is untrusted
+      span.style.left = (5 + hash(key, 1) * 90) + "%";
+      span.style.top = (4 + hash(key, 2) * 92) + "%";
+      if (highlight) span.classList.add("new");
+      cloud.appendChild(span);
+      shown.set(key, span);
+    }
+
+    async function refresh() {
+      const data = await Api.getIndicators();
+      data.indicators.forEach((text) => addToCloud(text, false));
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = input.value.trim().replace(/\s+/g, " ");
+      if (!text) return;
+
+      const button = form.querySelector("button");
+      button.disabled = true;
+      statusEl.className = "";
+      statusEl.textContent = "Sending…";
+      try {
+        const result = await Api.addIndicator(text);
+        input.value = "";
+        if (result.requireApproval) {
+          statusEl.textContent = "Thank you! Your indicator will appear after review.";
+        } else {
+          addToCloud(text, true);
+          statusEl.textContent = "Thank you! Your indicator was added.";
+        }
+      } catch (err) {
+        statusEl.className = "error";
+        statusEl.textContent = "Could not send: " + err.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    startPolling(refresh, config.POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>
