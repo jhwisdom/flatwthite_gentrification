@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,25 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <!-- MapTiler SDK CSS (optional) -->
   <link rel="stylesheet" href="https://unpkg.com/@maptiler/sdk@1.0.0/dist/maptilersdk.css" />
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <!-- Search Bar (Optional) -->
-  <input type="text" id="search" placeholder="Search (e.g., pilates)" />
 
-  <!-- Map Container -->
-  <div id="map"></div>
+<body>
+
+  <div class="app">
+    <!-- Search Bar (Optional) -->
+    <div class="search-bar">
+      <h1 id="question">Woran erkennst du Gentrifizierung?</h1>
+      <input type="text" id="search" placeholder="Search (e.g., pilates)" />
+      <button id="enterButton" onclick="handleEnterButton()">enter</button>
+    </div>
+
+    <div class="content">
+      <div id="toolbox">toolbox</div>
+      <div id="map"></div>
+    </div>
+  </div>
+
 
   <!-- Load Leaflet and MapTiler SDK -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -24,4 +36,5 @@
   <!-- Your custom script -->
   <script src="script.js"></script>
 </body>
+
 </html>

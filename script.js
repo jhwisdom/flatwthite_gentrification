@@ -13,6 +13,14 @@ map.dragging.disable();
 map.setZoom(13);
 map.setMinZoom(13);
 map.setMaxZoom(17);
+map.touchZoom.disable();
+map.doubleClickZoom.disable();
+map.scrollWheelZoom.disable();
+map.boxZoom.disable();
+map.keyboard.disable();
+
+//hide the zoom control
+map.zoomControl.remove();
 
 let poiData = null;      // holds the raw geojson once loaded
 let poiLayer = null;     // holds the currently-rendered Leaflet layer
@@ -68,8 +76,14 @@ input.addEventListener('keydown', (event) => {
   }  
 }); 
 
+function handleEnterButton() { 
+    const query = input.value.trim();  
+    if (query) handleSearch(query); // Only trigger if input is not empty 
+}
+
 function handleSearch(query) {  
-  //result.textContent = `Searching for: ${query}`;  
+  //result.textContent = `Searching for: ${query}`;
+  window.scrollTo(0, 700);  
   renderFilteredPOIs(query);
 }
 
