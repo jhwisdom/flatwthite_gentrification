@@ -1,69 +1,26 @@
-// SCRIPTS MAIN PAGE
+// Initialize the map with MapTiler
+const map = L.map('map').setView([50.1109, 8.6821], 13); // Frankfurt coordinates
 
-const config = window.APP_CONFIG;
-const cloud = document.getElementById("cloud");
-const form = document.getElementById("indicator-form");
-const input = document.getElementById("indicator");
-const statusEl = document.getElementById("status");
+// Add MapTiler layer (replace YOUR_MAPTILER_KEY with your actual key)
+L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=4dQmVB8bRuFfGXFPPxg3', {
+    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+}).addTo(map);
 
-input.maxLength = config.MAX_INDICATOR_LENGTH;
-document.getElementById("mock-note").hidden = !Api.useMock;
+// Load GeoJSON data
+fetch('frankfurt.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng).bindPopup(
+                    feature.properties.name || feature.properties.shop || "Pilates Location"
+                );
+            }
+        }).addTo(map);
+    });
 
-// Indicators currently shown, keyed by normalized text.
-const shown = new Map();
-
-// Deterministic pseudo-random number from a string, so each word keeps
-// the same position across reloads instead of jumping around.
-function hash(str, seed) {
-    let h = seed >>> 0;
-    for (let i = 0; i < str.length; i++) {
-        h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
-        h ^= h >>> 13;
-    }
-    return (h >>> 0) / 4294967295;
-}
-
-function addToCloud(text, highlight) {
-    const key = Api.normalize(text);
-    if (!key || shown.has(key)) return;
-    const span = document.createElement("span");
-    span.textContent = text; // textContent, never innerHTML: input is untrusted
-    span.style.left = (5 + hash(key, 1) * 90) + "%";
-    span.style.top = (4 + hash(key, 2) * 92) + "%";
-    if (highlight) span.classList.add("new");
-    cloud.appendChild(span);
-    shown.set(key, span);
-}
-
-async function refresh() {
-    const data = await Api.getIndicators();
-    data.indicators.forEach((text) => addToCloud(text, false));
-}
-
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const text = input.value.trim().replace(/\s+/g, " ");
-    if (!text) return;
-
-    const button = form.querySelector("button");
-    button.disabled = true;
-    statusEl.className = "";
-    statusEl.textContent = "Sending…";
-    try {
-        const result = await Api.addIndicator(text);
-        input.value = "";
-        if (result.requireApproval) {
-            statusEl.textContent = "Thank you! Your indicator will appear after review.";
-        } else {
-            addToCloud(text, true);
-            statusEl.textContent = "Thank you! Your indicator was added.";
-        }
-    } catch (err) {
-        statusEl.className = "error";
-        statusEl.textContent = "Could not send: " + err.message;
-    } finally {
-        button.disabled = false;
-    }
+// Optional: Add search functionality (for later real-time extension)
+document.getElementById('search').addEventListener('change', (e) => {
+    const query = e.target.value;
+    alert(`Searching for: ${query} (Real-time functionality to be added later)`);
 });
-
-startPolling(refresh, config.POLL_INTERVAL_MS);

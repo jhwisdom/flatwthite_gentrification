@@ -1,28 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gentrification Indicators</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frankfurt Pilates Map</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- MapTiler SDK CSS (optional) -->
+  <link rel="stylesheet" href="https://unpkg.com/@maptiler/sdk@1.0.0/dist/maptilersdk.css" />
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <div id="cloud" aria-hidden="true"></div>
+  <!-- Search Bar (Optional) -->
+  <input type="text" id="search" placeholder="Search (e.g., pilates)" />
 
-  <main>
-    <form id="indicator-form" autocomplete="off">
-      <label for="indicator">What is a sign of gentrification to you?</label>
-      <input id="indicator" name="indicator" type="text" required placeholder="e.g. rising rents">
-      <button type="submit">Submit</button>
-      <p id="status" role="status"></p>
-      <p class="small"><a href="map.html">Go to the map →</a></p>
-      <p class="small" id="mock-note" hidden>Demo mode: no API_URL set in config.js, nothing is saved.</p>
-    </form>
-  </main>
+  <!-- Map Container -->
+  <div id="map"></div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
+  <!-- Load Leaflet and MapTiler SDK -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@maptiler/sdk@1.0.0/dist/maptilersdk.umd.js"></script>
+
+  <!-- Your custom script -->
   <script src="script.js"></script>
-    
 </body>
 </html>
