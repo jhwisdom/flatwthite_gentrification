@@ -58,7 +58,7 @@
   <div id="layout">
     <button id="filter-toggle" type="button" aria-expanded="false">Filters</button>
     <aside id="sidebar">
-      <p class="hint">Long-press anywhere on the map to add a pin.</p>
+      <p class="hint">Click or tap anywhere on the map to add a pin.</p>
 
       <h2>Indicators</h2>
       <div id="indicator-filters"></div>
@@ -100,7 +100,8 @@
     document.getElementById("mock-note").hidden = !Api.useMock;
 
     // ---------- Map setup ----------
-    const map = L.map("map").setView(config.MAP_CENTER, config.MAP_ZOOM);
+    // Double-click zoom is off, because a single click already adds a pin.
+    const map = L.map("map", { doubleClickZoom: false }).setView(config.MAP_CENTER, config.MAP_ZOOM);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -214,16 +215,7 @@
           color: "#333", weight: 1, fillOpacity: 0.45,
           fillColor: colorFor(overlay, (feature.properties || {})[overlay.property]),
         }),
-        onEachFeature: (feature, layer) => {
-          // Popup lists all properties of the area (as text, never HTML).
-          const box = document.createElement("div");
-          for (const [key, value] of Object.entries(feature.properties || {})) {
-            const line = document.createElement("div");
-            line.textContent = `${key}: ${value}`;
-            box.appendChild(line);
-          }
-          layer.bindPopup(box);
-        },
+        interactive: false,
       });
     }
 
@@ -231,6 +223,8 @@
       const control = L.control({ position: "bottomright" });
       control.onAdd = () => {
         const div = L.DomUtil.create("div", "legend");
+        // Clicking the legend must not add a pin underneath it.
+        L.DomEvent.disableClickPropagation(div);
         const title = document.createElement("strong");
         title.textContent = overlay.label;
         div.appendChild(title);
@@ -277,52 +271,10 @@
     }
     renderOverlayToggles();
 
-    // ---------- Long press to add a pin ----------
-    // Custom timer instead of the browser's context menu, so it behaves the
-    // same on iOS, Android and desktop.
-    const container = map.getContainer();
-    const activePointers = new Set();
-    let pressTimer = null;
-    let pressStart = null;
-
-    function cancelPress() {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
-
-    container.addEventListener("contextmenu", (e) => e.preventDefault());
-
-    container.addEventListener("pointerdown", (e) => {
-      activePointers.add(e.pointerId);
-      // Ignore pinch zoom and presses on markers, popups or map controls.
-      if (activePointers.size > 1 || e.target.closest(".leaflet-marker-icon, .leaflet-popup, .leaflet-control")) {
-        cancelPress();
-        return;
-      }
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      pressStart = { x: e.clientX, y: e.clientY };
-      cancelPress();
-      pressTimer = setTimeout(() => {
-        pressTimer = null;
-        const rect = container.getBoundingClientRect();
-        const latlng = map.containerPointToLatLng(L.point(pressStart.x - rect.left, pressStart.y - rect.top));
-        if (navigator.vibrate) navigator.vibrate(30);
-        openPinDialog(latlng);
-      }, config.LONG_PRESS_MS);
-    });
-
-    container.addEventListener("pointermove", (e) => {
-      if (!pressTimer || !pressStart) return;
-      if (Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y) > 10) cancelPress();
-    });
-
-    for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
-      container.addEventListener(type, (e) => {
-        activePointers.delete(e.pointerId);
-        cancelPress();
-      });
-    }
-    map.on("movestart zoomstart", cancelPress);
+    // ---------- Click to add a pin ----------
+    // Leaflet fires "click" for a mouse click or a finger tap, but not after
+    // dragging the map. Clicks on markers, popups and controls do not reach here.
+    map.on("click", (e) => openPinDialog(e.latlng));
 
     // ---------- Pin dialog ----------
     const dialog = document.getElementById("pin-dialog");

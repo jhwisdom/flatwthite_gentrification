@@ -40,7 +40,4 @@ window.APP_CONFIG = {
       legendLabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
     },
   ],
-
-  // How long a press must be held to drop a pin (milliseconds).
-  LONG_PRESS_MS: 600,
 };
