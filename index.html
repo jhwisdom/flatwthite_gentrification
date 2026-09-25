@@ -5,16 +5,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frankfurt Gentrification Map</title>
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <!-- MapTiler SDK CSS (optional) -->
-  <link rel="stylesheet" href="https://unpkg.com/@maptiler/sdk@1.0.0/dist/maptilersdk.css" />
+
+  <!-- Include MapLibre GL JS CSS -->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" />
+
+<!-- Include MapLibre GL JS library -->
+   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
   <div class="app">
+    <div class="areas">
+      <h1 id="areaQuestion">Wo ist Frankfurt stark gentrifiziert?</h1>
+      <div id="areaMap"></div>
+    </div>
     <!-- Search Bar (Optional) -->
     <div class="search-bar">
       <h1 id="question">Woran erkennst du Gentrifizierung?</h1>
@@ -27,11 +35,6 @@
       <div id="map"></div>
     </div>
   </div>
-
-
-  <!-- Load Leaflet and MapTiler SDK -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/@maptiler/sdk@1.0.0/dist/maptilersdk.umd.js"></script>
 
   <!-- Your custom script -->
   <script src="script.js"></script>

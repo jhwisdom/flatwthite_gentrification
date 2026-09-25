@@ -1,93 +1,197 @@
-// Initialize the map with MapTiler
-const map = L.map('map').setView([50.1109, 8.6821], 13); // Frankfurt coordinates
+const MAPTILER_STYLE_URL = 'https://api.maptiler.com/maps/01a0d3cd-a4c3-74a0-b334-a7b39dbe66a8/style.json?key=WiAh6CxRmr05hDg1jDBe';
+const FRANKFURT_CENTER = [8.6821, 50.1109]; // [lng, lat]
 
-// Add MapTiler layer (replace YOUR_MAPTILER_KEY with your actual key)
-L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=4dQmVB8bRuFfGXFPPxg3', {
-    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
-}).addTo(map);
+// ---------------------------------------------------------------
+// Main interactive map (#map) — POI search + categories live here
+// ---------------------------------------------------------------
+const map = new maplibregl.Map({
+    container: 'map',
+    style: MAPTILER_STYLE_URL,
+    center: FRANKFURT_CENTER,
+    zoom: 12,
+    minZoom: 11,
+    maxZoom: 17,
+    dragPan: false,
+    scrollZoom: false,
+    doubleClickZoom: false,
+    touchZoomRotate: false,
+    boxZoom: false,
+    keyboard: false,
+    attributionControl: false,
+});
 
-//disable move and zoom
-map.dragging.disable();
+map.on('load', () => {
+    map.addControl(new maplibregl.AttributionControl({
+        compact: true,
+        customAttribution:
+            '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> ' +
+            '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+    }));
 
-//add max zoom out
-map.setZoom(13);
-map.setMinZoom(13);
-map.setMaxZoom(17);
-map.touchZoom.disable();
-map.doubleClickZoom.disable();
-map.scrollWheelZoom.disable();
-map.boxZoom.disable();
-map.keyboard.disable();
+    fetch('poi_frankfurt_points2.geojson')
+        .then(res => res.json())
+        .then(data => {
+            poiData = data;
+            // search bar starts empty — nothing rendered until the user searches
+        });
+});
 
-//hide the zoom control
-map.zoomControl.remove();
+// ---------------------------------------------------------------
+// Area overview map (#areaMap)
+// ---------------------------------------------------------------
+const areaMap = new maplibregl.Map({
+    container: 'areaMap',
+    style: MAPTILER_STYLE_URL,
+    center: FRANKFURT_CENTER,
+    zoom: 11,
+    dragPan: false,
+    scrollZoom: false,
+    doubleClickZoom: false,
+    touchZoomRotate: false,
+    boxZoom: false,
+    keyboard: false,
+});
 
-let poiData = null;      // holds the raw geojson once loaded
-let poiLayer = null;     // holds the currently-rendered Leaflet layer
+areaMap.on('load', () => {
+    fetch('frankfurt_boundaries.geojson')
+        .then(res => res.json())
+        .then(data => {
+            areaMap.addSource('frankfurt-boundary', { type: 'geojson', data });
+            areaMap.addLayer({
+                id: 'frankfurt-boundary-line',
+                type: 'line',
+                source: 'frankfurt-boundary',
+                paint: {
+                    'line-color': '#3388ff',
+                    'line-width': 3,
+                    'line-opacity': 1,
+                },
+            });
+        });
+});
 
-const input = document.getElementById('search');  
+// ---------------------------------------------------------------
+// Shared helper: a simple colored circle marker + popup
+// ---------------------------------------------------------------
+function addCircleMarker(feature, color) {
+    const [lng, lat] = feature.geometry.coordinates;
+    const label = feature.properties.name
+        || feature.properties.shop
+        || feature.properties.amenity
+        || 'Point of Interest';
 
-// Load once when the page starts
-fetch('poi_frankfurt_points2.geojson')
-    .then(response => response.json())
-    .then(data => {
-        poiData = data;
-        renderFilteredPOIs(''); // still call this, but it'll now render nothing
-    });
+    const el = document.createElement('div');
+    el.className = 'circle-marker';
+    el.style.backgroundColor = color;
+
+    return new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        //.setPopup(new maplibregl.Popup({ offset: 12 }).setText(label))
+        .addTo(map);
+}
+
+let poiData = null; // holds the raw geojson once loaded
+
+// ---------------------------------------------------------------
+// Search bar — ONE fixed color, replaces its own markers each search
+// ---------------------------------------------------------------
+const SEARCH_COLOR = '#A08BFD70'; // change this to whatever color you want search results to be
+
+let searchMarkers = [];
+const input = document.getElementById('search');
 
 function matchesQuery(feature, query) {
-    if (!query) return false; // empty search = show nothing
-
+    if (!query) return false;
     const props = feature.properties || {};
     const haystack = [
         props.name, props.shop, props.amenity, props.cuisine,
-        props.leisure, props.tourism, props.sport
+        props.leisure, props.tourism, props.sport,
     ].filter(Boolean).join(' ').toLowerCase();
-
     return haystack.includes(query.toLowerCase());
 }
 
 function renderFilteredPOIs(query) {
-    if (!poiData) return; // not loaded yet
+    if (!poiData) return;
 
-    // remove the old layer before adding a new one
-    if (poiLayer) {
-        map.removeLayer(poiLayer);
+    // clear only the previous SEARCH markers — categories are untouched
+    searchMarkers.forEach(marker => marker.remove());
+    searchMarkers = [];
+
+    poiData.features
+        .filter(feature => matchesQuery(feature, query))
+        .forEach(feature => {
+            searchMarkers.push(addCircleMarker(feature, SEARCH_COLOR));
+        });
+}
+
+input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const query = input.value.trim();
+        if (query) handleSearch(query);
     }
+});
 
-    poiLayer = L.geoJSON(poiData, {
-        filter: feature => matchesQuery(feature, query),
-        pointToLayer: function (feature, latlng) {
-            const label = feature.properties.name
-                || feature.properties.shop
-                || feature.properties.amenity
-                || "Point of Interest";
-            return L.marker(latlng).bindPopup(label);
-        }
-    }).addTo(map);
+function handleEnterButton() {
+    const query = input.value.trim();
+    if (query) handleSearch(query);
 }
 
-input.addEventListener('keydown', (event) => {  
-  // Check if the pressed key is Enter  
-  if (event.key === 'Enter') {  
-    event.preventDefault(); // Prevent default behavior (e.g., form submission)  
-    const query = input.value.trim();  
-    if (query) handleSearch(query); // Only trigger if input is not empty  
-  }  
-}); 
-
-function handleEnterButton() { 
-    const query = input.value.trim();  
-    if (query) handleSearch(query); // Only trigger if input is not empty 
+function handleSearch(query) {
+    window.scrollTo(0, 700);
+    renderFilteredPOIs(query);
 }
 
-function handleSearch(query) {  
-  //result.textContent = `Searching for: ${query}`;
-  window.scrollTo(0, 700);  
-  renderFilteredPOIs(query);
+// ---------------------------------------------------------------
+// Category toggles (left sidebar / #toolbox) — each has its own
+// fixed color, stays on the map independently of the search bar.
+// Edit this list once you know your real categories + match rules.
+// ---------------------------------------------------------------
+const CATEGORIES = [
+    { key: 'pilates', label: 'Pilates', color: '#2a9d8f', match: f => matchesQuery(f, 'pilates') },
+    { key: 'bike', label: 'Bike', color: '#457b9d', match: f => matchesQuery(f, 'bike') },
+    // add more: { key: 'cafe', label: 'Cafés', color: '#f4a261', match: f => matchesQuery(f, 'cafe') },
+];
+
+const categoryMarkers = {}; // key -> array of markers currently shown
+const categoryActive = {};  // key -> boolean
+
+function toggleCategory(key) {
+    if (!poiData) return; // POIs not loaded yet
+
+    const category = CATEGORIES.find(c => c.key === key);
+    if (!category) return;
+
+    if (categoryActive[key]) {
+        // currently on -> turn off, remove its markers only
+        (categoryMarkers[key] || []).forEach(marker => marker.remove());
+        categoryMarkers[key] = [];
+        categoryActive[key] = false;
+    } else {
+        // currently off -> turn on, add markers in this category's color
+        categoryMarkers[key] = poiData.features
+            .filter(category.match)
+            .map(feature => addCircleMarker(feature, category.color));
+        categoryActive[key] = true;
+    }
 }
 
-// Live filtering as the user types
-/*document.getElementById('search').addEventListener('input', (e) => {
-    renderFilteredPOIs(e.target.value);
-});*/
+// Minimal auto-generated buttons inside #toolbox, one per category.
+// Replace this with your own sidebar markup once it's designed —
+// just make sure each button calls toggleCategory('<key>') on click.
+function renderCategoryToolbox() {
+    const toolbox = document.getElementById('toolbox');
+    toolbox.innerHTML = '';
+    CATEGORIES.forEach(category => {
+        const btn = document.createElement('button');
+        btn.textContent = category.label;
+        btn.style.borderLeft = `6px solid ${category.color}`;
+        btn.addEventListener('click', () => toggleCategory(category.key));
+        toolbox.appendChild(btn);
+    });
+}
+
+map.on('load', () => {
+    // build the toolbox once the map exists; toggling still waits on poiData internally
+    renderCategoryToolbox();
+});
