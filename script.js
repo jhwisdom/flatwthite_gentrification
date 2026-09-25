@@ -1,69 +1,93 @@
-// SCRIPTS MAIN PAGE
+// Initialize the map with MapTiler
+const map = L.map('map').setView([50.1109, 8.6821], 13); // Frankfurt coordinates
 
-const config = window.APP_CONFIG;
-const cloud = document.getElementById("cloud");
-const form = document.getElementById("indicator-form");
-const input = document.getElementById("indicator");
-const statusEl = document.getElementById("status");
+// Add MapTiler layer (replace YOUR_MAPTILER_KEY with your actual key)
+L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=4dQmVB8bRuFfGXFPPxg3', {
+    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+}).addTo(map);
 
-input.maxLength = config.MAX_INDICATOR_LENGTH;
-document.getElementById("mock-note").hidden = !Api.useMock;
+//disable move and zoom
+map.dragging.disable();
 
-// Indicators currently shown, keyed by normalized text.
-const shown = new Map();
+//add max zoom out
+map.setZoom(13);
+map.setMinZoom(13);
+map.setMaxZoom(17);
+map.touchZoom.disable();
+map.doubleClickZoom.disable();
+map.scrollWheelZoom.disable();
+map.boxZoom.disable();
+map.keyboard.disable();
 
-// Deterministic pseudo-random number from a string, so each word keeps
-// the same position across reloads instead of jumping around.
-function hash(str, seed) {
-    let h = seed >>> 0;
-    for (let i = 0; i < str.length; i++) {
-        h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
-        h ^= h >>> 13;
+//hide the zoom control
+map.zoomControl.remove();
+
+let poiData = null;      // holds the raw geojson once loaded
+let poiLayer = null;     // holds the currently-rendered Leaflet layer
+
+const input = document.getElementById('search');  
+
+// Load once when the page starts
+fetch('poi_frankfurt_points2.geojson')
+    .then(response => response.json())
+    .then(data => {
+        poiData = data;
+        renderFilteredPOIs(''); // still call this, but it'll now render nothing
+    });
+
+function matchesQuery(feature, query) {
+    if (!query) return false; // empty search = show nothing
+
+    const props = feature.properties || {};
+    const haystack = [
+        props.name, props.shop, props.amenity, props.cuisine,
+        props.leisure, props.tourism, props.sport
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    return haystack.includes(query.toLowerCase());
+}
+
+function renderFilteredPOIs(query) {
+    if (!poiData) return; // not loaded yet
+
+    // remove the old layer before adding a new one
+    if (poiLayer) {
+        map.removeLayer(poiLayer);
     }
-    return (h >>> 0) / 4294967295;
-}
 
-function addToCloud(text, highlight) {
-    const key = Api.normalize(text);
-    if (!key || shown.has(key)) return;
-    const span = document.createElement("span");
-    span.textContent = text; // textContent, never innerHTML: input is untrusted
-    span.style.left = (5 + hash(key, 1) * 90) + "%";
-    span.style.top = (4 + hash(key, 2) * 92) + "%";
-    if (highlight) span.classList.add("new");
-    cloud.appendChild(span);
-    shown.set(key, span);
-}
-
-async function refresh() {
-    const data = await Api.getIndicators();
-    data.indicators.forEach((text) => addToCloud(text, false));
-}
-
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const text = input.value.trim().replace(/\s+/g, " ");
-    if (!text) return;
-
-    const button = form.querySelector("button");
-    button.disabled = true;
-    statusEl.className = "";
-    statusEl.textContent = "Sending…";
-    try {
-        const result = await Api.addIndicator(text);
-        input.value = "";
-        if (result.requireApproval) {
-            statusEl.textContent = "Thank you! Your indicator will appear after review.";
-        } else {
-            addToCloud(text, true);
-            statusEl.textContent = "Thank you! Your indicator was added.";
+    poiLayer = L.geoJSON(poiData, {
+        filter: feature => matchesQuery(feature, query),
+        pointToLayer: function (feature, latlng) {
+            const label = feature.properties.name
+                || feature.properties.shop
+                || feature.properties.amenity
+                || "Point of Interest";
+            return L.marker(latlng).bindPopup(label);
         }
-    } catch (err) {
-        statusEl.className = "error";
-        statusEl.textContent = "Could not send: " + err.message;
-    } finally {
-        button.disabled = false;
-    }
-});
+    }).addTo(map);
+}
 
-startPolling(refresh, config.POLL_INTERVAL_MS);
+input.addEventListener('keydown', (event) => {  
+  // Check if the pressed key is Enter  
+  if (event.key === 'Enter') {  
+    event.preventDefault(); // Prevent default behavior (e.g., form submission)  
+    const query = input.value.trim();  
+    if (query) handleSearch(query); // Only trigger if input is not empty  
+  }  
+}); 
+
+function handleEnterButton() { 
+    const query = input.value.trim();  
+    if (query) handleSearch(query); // Only trigger if input is not empty 
+}
+
+function handleSearch(query) {  
+  //result.textContent = `Searching for: ${query}`;
+  window.scrollTo(0, 700);  
+  renderFilteredPOIs(query);
+}
+
+// Live filtering as the user types
+/*document.getElementById('search').addEventListener('input', (e) => {
+    renderFilteredPOIs(e.target.value);
+});*/
