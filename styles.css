@@ -147,8 +147,8 @@ p {
   padding: 16px;
   flex-shrink: 0; /* keeps the search bar from shrinking */
   text-align:center;
-  margin-top: 800px;
-  position: absolute;
+  margin-top: 100px;
+  position: relative;
 }
 
 #areaMap {
