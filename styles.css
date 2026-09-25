@@ -1,6 +1,6 @@
 html, body {
-  height: 100%;
   margin: 0;
+  scroll-behavior: smooth;
 }
 
 .app {
@@ -51,5 +51,17 @@ html, body {
 #map {
     margin: 20px;
   flex: 1; /* takes up all remaining horizontal space */
-  height: 94%;
+  height: 500px;
+}
+
+#areaMap {
+  margin: 20px;
+  width: 600px; /* takes up all remaining horizontal space */
+  height: 400px;
+}
+
+.circle-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
 }
