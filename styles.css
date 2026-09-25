@@ -72,8 +72,7 @@ html, body {
   padding: 16px;
   flex-shrink: 0; /* keeps the search bar from shrinking */
   text-align:center;
-  margin-top: 15%;
-  height: 35%;
+  height: 700px;
   background-color: #171717;
 }
 
@@ -100,6 +99,12 @@ h2 {
   margin-top: 120px;
 }
 
+h3 {
+  font-size: 30px;
+  color: #171717;
+  margin: 20px;
+}
+
 p {
   width: 700px;
   max-width: 90%;
@@ -114,6 +119,7 @@ p {
   width: 40%;
   box-sizing: border-box;
   padding: 8px;
+  margin-top: 100px;
 }
 
 #enterButton {
@@ -125,7 +131,7 @@ p {
   display: flex;
   flex: 1; /* fills all remaining vertical space below the search bar */
   overflow: hidden;
-  height: 100%;
+  height: 700px;
 }
 
 #toolbox {
@@ -140,27 +146,44 @@ p {
 #map {
   margin: 20px;
   flex: 1; /* takes up all remaining horizontal space */
-  height: 500px;
-}
-
-.areas {
-  padding: 16px;
-  flex-shrink: 0; /* keeps the search bar from shrinking */
-  text-align:center;
-  margin-top: 100px;
-  position: relative;
-}
-
-#areaMap {
-  display: flex;
-  margin: 20px;
-  width: 100%; /* takes up all remaining horizontal space */
   height: 700px;
 }
 
-#areaInstruction {
+.areas {
+  flex-shrink: 0; /* keeps the search bar from shrinking */
+  text-align:center;
+  position: relative;
+  height: 700px;
+}
+
+#areaMap {
+  position: relative;
+  display: flex;
+  width: 100%; /* takes up all remaining horizontal space */
+  height: 100%;
+}
+
+.areaInstruction {
   position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  background-color: white;
+  height: 60px;
+  margin: 30px;
+  border-width: 2px;
+  border-color: #171717;
+  
+}
+
+#areaQuestion {
   color: #171717;
+  text-align: center;
+  margin: 0;
+  margin-top: 10px;
+  max-width: 100%;
 }
 
 .circle-marker {

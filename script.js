@@ -134,6 +134,8 @@ areaMap.on('load', () => {
         },
     }, beforeId);
 
+    areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.svg") 16 16, auto';
+
     areaMap.on('click', (event) => {
         const feature = {
             id: `custom-point-${Date.now()}-${Math.random().toString(36).slice(2)}`,
