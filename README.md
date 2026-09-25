@@ -1,4 +1,6 @@
-# Gentrification Map (prototype)
+# Flat-White-Gentrification (prototype)
+
+## We are... 
 
 Two static pages for GitHub Pages, with Google Sheets as the database.
 
