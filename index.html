@@ -6,26 +6,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frankfurt Gentrification Map</title>
 
-  <!-- Include MapLibre GL JS CSS -->
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Encode+Sans+Condensed:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 
-<!-- Include MapLibre GL JS library -->
-   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <!-- Include MapLibre GL JS CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" />
+
+  <!-- Include MapLibre GL JS library -->
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
 
   <link rel="stylesheet" href="styles.css" />
+
+
 </head>
 
 <body>
 
   <div class="app">
+    <div class="start">
+      <h2>DO YOU KNOW ABOUT</h2>
+      <h1>GENTRIFICATION?</h1>
+      <p>to put it simply: People with a lot of money move to a specific district, where poorer people live. Resulting
+        in an overall enhancement on the appearance of that district. For example, there will probably be more coffee
+        shops and restaurants opening. Eventually, rent prices will increase significantly, making it impossible for the
+        initial residents to pay for rent, which will lead to them having to move out.
+        Rinse, repeat this progress and eventually there will only be rich people left.
+      </p>
+      <h1>↓</h1>
+    </div>
     <div class="areas">
-      <h1 id="areaQuestion">Wo ist Frankfurt stark gentrifiziert?</h1>
+      <div class="areaInstruction">
+        <h1 id="areaQuestion">Mark Frankfurts most gentrified area</h1>
+      </div>
       <div id="areaMap"></div>
     </div>
     <!-- Search Bar (Optional) -->
     <div class="search-bar">
-      <h1 id="question">Woran erkennst du Gentrifizierung?</h1>
+      <h2>WHAT IS AN INDICATOR FOR</h2>
+      <h1>GENTRIFICATION?</h1>
       <input type="text" id="search" placeholder="Search (e.g., pilates)" />
       <button id="enterButton" onclick="handleEnterButton()">enter</button>
     </div>
