@@ -116,15 +116,32 @@ p {
 }
 
 #search {
-  width: 40%;
+  width: 80%;
+  height: 80px;
   box-sizing: border-box;
   padding: 8px;
   margin-top: 100px;
+  border: 0px;
+  background-color: #A08BFD;
+  color: white;
+  font-family: inherit;
+  font-size: 50px;
+  text-align: center;
+}
+
+::placeholder{
+  color: white;
 }
 
 #enterButton {
-    height: 35px;
+    height: 60px;
     width: 60px;
+    background-color: white;
+    border-width: 0px;
+    color: #171717;
+    margin-top: 0px;
+    border-radius: 100%;
+
 }
 
 .content {
@@ -140,7 +157,24 @@ p {
   overflow-y: auto;
   margin: 20px;
   margin-right: 0px;
-  background-color: aquamarine;
+  background-color: white;
+  border: 2px black;
+}
+
+.buttonBox {
+  margin-left: 20px;
+}
+
+button {
+  height: 40px;
+  background-color: white;
+  color: #171717;
+  border-width: 1px;
+  border-color: #171717;
+  font-size: 20px;
+  font-family: inherit;
+  margin-right: 5px;
+  margin-bottom: 5px;
 }
 
 #map {

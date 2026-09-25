@@ -8,7 +8,7 @@ const map = new maplibregl.Map({
     container: 'map',
     style: MAPTILER_STYLE_URL,
     center: FRANKFURT_CENTER,
-    zoom: 13,
+    zoom: 12,
     minZoom: 13,
     maxZoom: 17,
     dragPan: false,
