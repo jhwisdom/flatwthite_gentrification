@@ -95,6 +95,18 @@ function saveCustomPointsToStorage() {
 // loaded once at startup so both maps can use whatever was placed earlier
 let customPointsData = loadCustomPoints();
 
+function syncCustomPointHighlighting() {
+    const latestId = customPointsData.features.length
+        ? customPointsData.features[customPointsData.features.length - 1].id
+        : null;
+
+    customPointsData.features.forEach(feature => {
+        const props = feature.properties || {};
+        props.isLatest = feature.id === latestId;
+        feature.properties = props;
+    });
+}
+
 function updateCustomCategoryOnMainMap() {
     const source = map.getSource(categorySourceId(CUSTOM_CATEGORY_KEY));
     if (source) source.setData(customPointsData); // no-op if #map isn't ready yet
@@ -155,9 +167,14 @@ areaMap.on('load', () => {
                 type: 'Point',
                 coordinates: [event.lngLat.lng, event.lngLat.lat],
             },
-            properties: {},
+            properties: { isLatest: true },
         };
+
+        customPointsData.features.forEach(existingFeature => {
+            existingFeature.properties = { ...(existingFeature.properties || {}), isLatest: false };
+        });
         customPointsData.features.push(feature);
+        syncCustomPointHighlighting();
         saveCustomPointsToStorage();
 
         visiblePreviewPointsData.features.push(feature);
@@ -506,9 +523,9 @@ function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
         source: categorySourceId(CUSTOM_CATEGORY_KEY),
         layout: { visibility: 'none' },
         paint: {
-            'circle-radius': 11,
+            'circle-radius': ['case', ['==', ['get', 'isLatest'], true], 18, 11],
             'circle-color': CUSTOM_CATEGORY_COLOR,
-            'circle-opacity': 0.65,
+            'circle-opacity': ['case', ['==', ['get', 'isLatest'], true], 1, 0.65],
         },
     }, beforeId);
     categoryActive[CUSTOM_CATEGORY_KEY] = false;
