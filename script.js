@@ -254,6 +254,8 @@ function handleEnterButton() {
 function handleSearch(query) {
     document.getElementById("toolbox").scrollIntoView();
     renderFilteredPOIs(query);
+    map.setLayoutProperty(SEARCH_LAYER_ID, 'visibility', 'visible');
+    setMapToggleButtonState(searchResultsButton, true);
     updateSearchResultsButtonLabel();
 }
 
