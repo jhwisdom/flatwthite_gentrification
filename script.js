@@ -139,7 +139,7 @@ areaMap.on('load', () => {
         },
     }, beforeId);
 
-    areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.svg") 16 16, auto';
+    areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.png") 16 16, auto';
 
     areaMap.on('click', (event) => {
         const areaMapContainer = areaMap.getContainer();
