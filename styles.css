@@ -385,3 +385,203 @@ button {
   font-size: 10px;
   margin: 0px;
 }
+
+
+
+
+/* ---------------------------------------------------------------
+   Mobile layout (phones, up to 700px wide)
+   Desktop styles above stay untouched; these rules only apply on
+   small screens. Keep this block at the END of the file.
+   --------------------------------------------------------------- */
+@media (max-width: 700px) {
+
+  /* never scroll sideways, even if a long word is a bit too wide
+     ("clip" instead of "hidden" so scrolling to sections still works) */
+  .app {
+    overflow-x: clip;
+  }
+
+  h1 {
+    font-size: 10vw;          /* "GENTRIFICATION?" fits on one line */
+  }
+
+  h2 {
+    font-size: 6.5vw;
+    margin-top: 0;
+  }
+
+  p {
+    width: auto;
+    max-width: none;
+    margin: 20px 20px 0;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+
+  /* 1) Intro: exactly one screen, content centred, arrow as a scroll hint */
+  .start {
+    height: auto;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 32px 0;
+    box-sizing: border-box;
+  }
+
+  .start h1:last-child {
+    margin-top: 24px;
+    font-size: 40px;
+  }
+
+  /* 2) "Put a pin" map: the question is a small banner on top of the map,
+        the rest of the map stays free to tap */
+  .areas {
+    height: 75svh;
+  }
+
+  .areaInstruction {
+    inset: auto;              /* no longer stretched over the whole map */
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    height: auto;
+    margin: 0;
+    padding: 8px 12px;
+    border: 2px solid #171717;
+  }
+
+  #areaQuestion {
+    font-size: 15px;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  /* undo / clear buttons (if present) float at the bottom of the map */
+  #new-points-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 3) Search */
+  .search-bar {
+    height: auto;
+    min-height: 70svh;
+    padding: 48px 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #search {
+    width: 100%;
+    height: 60px;
+    margin-top: 32px;
+    font-size: 20px;
+  }
+
+  ::placeholder {
+    font-size: 20px;
+  }
+
+  #enterButton {
+    height: 52px;
+    width: 160px;
+    font-size: 18px;
+  }
+
+  /* 4) Explore: map on top, all buttons right below it in one screen.
+        Each button group is one row that scrolls sideways. */
+  .content {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  #map {
+    order: -1;                /* map first, buttons below */
+    width: 100%;
+    height: 56svh;
+    flex: none;
+  }
+
+  #toolbox {
+    width: auto;
+    margin: 0;
+    padding: 4px 0 16px;
+    overflow: visible;
+    /* script.js scrolls to the buttons after a search; this keeps the
+       map (which sits right above them) in view as well */
+    scroll-margin-top: 56svh;
+  }
+
+  #toolbox h3 {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    margin: 12px 16px 6px;
+  }
+
+  .buttonBox {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0 16px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;    /* hide the scrollbar, swiping still works */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .buttonBox::-webkit-scrollbar {
+    display: none;
+  }
+
+  .buttonBox button {
+    flex: none;
+    white-space: nowrap;
+    margin: 0;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 15px;
+  }
+
+  .city-data-legend {
+    margin: 10px 16px 0;
+    gap: 8px;
+  }
+
+  .legend-title {
+    font-size: 13px;
+  }
+
+  #notes {
+    margin: 16px;
+  }
+
+  .note {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  /* footer */
+  .footer {
+    height: auto;
+    padding: 16px 0;
+  }
+
+  #credits {
+    width: auto;
+    max-width: none;
+    margin: 0 16px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+}
