@@ -288,7 +288,7 @@ const GENTRIFY_BUSINESSES = [
     }
 
     function finish() {
-        overlay.style.background = '#000'; // make sure it is fully black
+        overlay.style.background = '#171717'; // make sure it is fully black
         overlay.classList.add('is-final'); // now blocks the page
         message.classList.add('is-visible');
         // Start counting once the message has faded in, so "20" is clearly visible.
