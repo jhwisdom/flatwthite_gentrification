@@ -168,46 +168,7 @@ areaMap.on('load', () => {
             document.querySelector('.search-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, SEARCH_SCROLL_DELAY_MS);
     });
-
-    renderNewPointsControls();
 });
-
-function undoLastCustomPoint() {
-    const removedPoint = customPointsData.features.pop();
-    if (removedPoint && removedPoint.id) removePreviewPoint(removedPoint.id);
-    saveCustomPointsToStorage();
-    updateCustomCategoryOnMainMap();
-}
-
-function clearCustomPoints() {
-    customPointsData = { type: 'FeatureCollection', features: [] };
-    previewHideTimers.forEach(timer => clearTimeout(timer));
-    previewHideTimers.clear();
-    visiblePreviewPointsData = { type: 'FeatureCollection', features: [] };
-    saveCustomPointsToStorage();
-    updateAreaMapPreview();
-    updateCustomCategoryOnMainMap();
-}
-
-// Minimal auto-generated buttons under the area map. Replace with your
-// own markup/placement once you've designed it.
-function renderNewPointsControls() {
-    const container = document.createElement('div');
-    container.id = 'new-points-controls';
-
-    const undoBtn = document.createElement('button');
-    undoBtn.textContent = 'Undo last';
-    undoBtn.addEventListener('click', undoLastCustomPoint);
-
-    const clearBtn = document.createElement('button');
-    clearBtn.textContent = 'Clear all';
-    clearBtn.addEventListener('click', clearCustomPoints);
-
-    container.appendChild(undoBtn);
-    container.appendChild(clearBtn);
-
-    document.querySelector('.areas').appendChild(container);
-}
 
 // ---------------------------------------------------------------
 // Finds the first label ("symbol") layer in the style. Inserting our
@@ -439,6 +400,9 @@ function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
             'circle-radius': 8,
             'circle-color': SEARCH_COLOR,
             'circle-opacity': 0.44,
+            'circle-stroke-color': '#000000',
+            'circle-stroke-width': 0.5,
+            'circle-stroke-opacity': 1,
         },
     }, beforeId);
 
@@ -522,6 +486,9 @@ function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
                 'circle-radius': 11,
                 'circle-color': category.color,
                 'circle-opacity': 0.65,
+                'circle-stroke-color': '#000000',
+                'circle-stroke-width': 0.5,
+                'circle-stroke-opacity': 1,
             },
         }, beforeId);
 
