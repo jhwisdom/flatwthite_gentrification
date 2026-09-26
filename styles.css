@@ -61,6 +61,11 @@ html, body {
   margin: 0;
   scroll-behavior: smooth;
   font-family: "Encode Sans Condensed", sans-serif;
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 * {
