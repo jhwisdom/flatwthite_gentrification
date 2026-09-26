@@ -9,24 +9,34 @@
 // Which darkening effect to use:
 //   'vignette' = black creeps in smoothly from the edges of the screen
 //   'mold'     = soft black spots of different sizes spread over the screen
-const GENTRIFY_EFFECT = 'vignette';
+const GENTRIFY_EFFECT = 'mold';
 
-const GENTRIFY_MIN_CLICKS = 6;      // the number of clicks is picked at random
-const GENTRIFY_MAX_CLICKS = 7;      // between these two values (inclusive)
-const GENTRIFY_STEP_MS = 1400;      // how long each darkening step takes
+const GENTRIFY_START_MIN = 5;      // the number of clicks is picked at random
+const GENTRIFY_START_MAX = 10;      // between these two values (inclusive)
+const GENTRIFY_EXTRA_MIN = 3;       // then 3, 4 or 5 more clicks until the page is black + message
+const GENTRIFY_EXTRA_MAX = 3;       // (e.g. start 11 + extra 4 -> black at click 15)
+const GENTRIFY_STEP_MS = 1400;      // how long the first darkening step takes
+const GENTRIFY_SPEEDUP = 0.6;       // each following step takes this share of the previous one
+                                    // (1.4 s -> 0.84 s -> 0.5 s ...), so it rushes to black at the end
+const GENTRIFY_IDLE_MS = 8000;      // if nobody clicks for this long after it started, it
+                                    // continues by itself (so it never stays half dark).
+                                    // Set to 0 to only move on with clicks.
 const GENTRIFY_RELOAD_SECONDS = 8; // countdown under the message, then the page reloads
 const GENTRIFY_BUSINESSES = [
     'a Pilates Studio',
     'a Café selling flatwhite',
     'a luxury Hairsalon',
+    'a fancy Winebar',
+    'a Coworking place with expensive membership fees'
 ];
 
 (function setupGentrification() {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const stepMs = reduceMotion ? 200 : GENTRIFY_STEP_MS;
+    const firstStepMs = reduceMotion ? 200 : GENTRIFY_STEP_MS;
+        const randomBetween = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+    const startClick = randomBetween(GENTRIFY_START_MIN, GENTRIFY_START_MAX);
+    const extraClicks = randomBetween(GENTRIFY_EXTRA_MIN, GENTRIFY_EXTRA_MAX);
 
-    const clicksNeeded = GENTRIFY_MIN_CLICKS +
-        Math.floor(Math.random() * (GENTRIFY_MAX_CLICKS - GENTRIFY_MIN_CLICKS + 1));
     const business = GENTRIFY_BUSINESSES[Math.floor(Math.random() * GENTRIFY_BUSINESSES.length)];
 
     // Full-screen layer on top of the page. It lets clicks pass through
@@ -38,7 +48,7 @@ const GENTRIFY_BUSINESSES = [
     const message = document.createElement('p');
     message.id = 'gentrify-message';
     message.setAttribute('role', 'status');
-    message.textContent = `This site is gentrified. Now under construction of ${business}.`;
+    message.textContent = `This site is also gentrified. Now ${business} is under construction here.`;
 
     // Countdown shown under the message (20 ... 0), then the page starts over.
     const countdown = document.createElement('p');
@@ -241,14 +251,14 @@ const GENTRIFY_BUSINESSES = [
     let shown = 0;          // darkness currently drawn, 0 = none, 1 = fully black
     let animation = null;
 
-    // Smoothly moves the darkness to `target`.
-    function animateTo(target, onDone) {
+    // Smoothly moves the darkness to `target` within `duration` ms.
+    function animateTo(target, duration, onDone) {
         cancelAnimationFrame(animation);
         const from = shown;
         effect.beginStep(from, target);
         const start = performance.now();
         const tick = (now) => {
-            const t = Math.min(1, (now - start) / stepMs);
+            const t = Math.min(1, (now - start) / duration);
             const eased = 1 - Math.pow(1 - t, 3); // ease-out
             shown = from + (target - from) * eased;
             effect.render(shown, t);
@@ -287,14 +297,33 @@ const GENTRIFY_BUSINESSES = [
         setTimeout(startCountdown, 1500);
     }
 
-    // One step darker per click, until the page is fully black.
-    function registerClick() {
-        if (clicks >= clicksNeeded) return; // already gentrified
-        clicks += 1;
-        const target = clicks / clicksNeeded;
-        animateTo(target, target >= 1 ? finish : null);
+    // Clicks before the MIN-th one change nothing. At the MIN-th click the
+    // darkening starts; after that it moves on by itself, step by step and
+    // faster each time, until the page is black and the message appears.
+    // Extra clicks only bring the next step sooner.
+    
+    const visibleSteps = extraClicks + 1;   
+    let step = 0;           // darkening steps done so far
+    let autoTimer = null;
+
+    function nextStep() {
+        clearTimeout(autoTimer);
+        if (step >= visibleSteps) return;   // already black
+        step += 1;
+        const target = step / visibleSteps;
+        const speed = Math.pow(GENTRIFY_SPEEDUP, step - 1); // 1, 0.6, 0.36, ...
+        // Only one step (straight from clear to black): take longer so it still feels gradual.
+        const duration = visibleSteps === 1 ? firstStepMs * 2 : firstStepMs * speed;
+        animateTo(target, duration, () => {
+            if (target >= 1) finish();
+            else if (GENTRIFY_IDLE_MS > 0) idleTimer = setTimeout(nextStep, GENTRIFY_IDLE_MS);
+        });
     }
 
+    function registerClick() {
+        clicks += 1;
+        if (clicks >= startClick) nextStep();  
+    }
     // 1) Clicks on the bottom map
     map.on('click', registerClick);
 
@@ -306,5 +335,5 @@ const GENTRIFY_BUSINESSES = [
         toolbox.addEventListener('click', (event) => {
             if (event.target.closest('button')) registerClick();
         });
-    }
-})();
+    };
+})();    
