@@ -63,6 +63,10 @@ html, body {
   font-family: "Encode Sans Condensed", sans-serif;
 }
 
+* {
+  cursor: url("DATADREAMS_icon_1.svg") 16 16, auto !important;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -83,6 +87,20 @@ html, body {
   text-align: center;
   height: 800px;
   background-color: #171717;
+}
+
+.footer {
+  background-color: #171717;
+  height: 60px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#credits {
+  width: 100%;
+  font-size: 15px;
+  text-align: center;
 }
 
 h1 {
@@ -161,7 +179,6 @@ p {
   margin: 20px;
   margin-right: 0px;
   background-color: white;
-  border: 2px black;
 }
 
 .buttonBox {
@@ -185,9 +202,16 @@ button {
 }
 
 #toolbox .map-toggle.is-active {
-  background-color: var(--map-toggle-color, #171717);
+  background-color: var(--map-toggle-color, #B2DB5D);
   color: #171717;
   border-color: #171717;
+}
+
+#toolbox .map-toggle[data-map-toggle="vacancies"].is-active,
+#toolbox .map-toggle[data-map-toggle="rental"].is-active,
+#toolbox .map-toggle[data-map-toggle="wohnlage"].is-active {
+  background-color: #171717;
+  color: white;
 }
 
 #toolbox .map-toggle[data-map-toggle="wohnlage"].is-active {
@@ -197,6 +221,49 @@ button {
 #toolbox .map-toggle:focus-visible {
   outline: 3px solid #A08BFD;
   outline-offset: 2px;
+}
+
+.city-data-legend {
+  display: grid;
+  gap: 14px;
+  margin: 12px 20px 24px;
+}
+
+.legend-item {
+  display: none;
+  min-width: 0;
+}
+
+.legend-item.is-visible {
+  display: block;
+}
+
+.legend-title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.legend-scale {
+  height: 12px;
+  border: 1px solid #171717;
+}
+
+.location-area-scale {
+  background: linear-gradient(90deg, #2FC4FF, #DB5DCE);
+}
+
+.rent-scale {
+  background: linear-gradient(90deg, #2d2aee 0%, #d2f547 26.5%, #f9484b 59.5%, #ad121a 100%);
+}
+
+.legend-endpoints {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 #map {
@@ -308,7 +375,7 @@ button {
 }
 
 #notes {
-  margin-top: 100px;
+  margin-top: 20px;
   margin-left: 20px;
 }
 

@@ -69,7 +69,19 @@
         <div class="buttonBox">
           <button id="buttonAddress" class="map-toggle" data-map-toggle="wohnlage" type="button" aria-pressed="false">good address*</button>
           <button id="buttonVac" class="map-toggle" data-map-toggle="vacancies" type="button" aria-pressed="false">vacancies**</button>
-          <button id="buttonRental">rental prices***</button>
+          <button id="buttonRental" class="map-toggle" data-map-toggle="rental" type="button" aria-pressed="false">rental prices***</button>
+        </div>
+        <div class="city-data-legend" aria-label="City data map color key">
+          <div class="legend-item" data-legend-for="wohnlage">
+            <span class="legend-title">Location area class</span>
+            <div class="legend-scale location-area-scale" role="img" aria-label="Gradient from class 1, green, to class 10, red"></div>
+            <div class="legend-endpoints"><span>1</span><span>10</span></div>
+          </div>
+          <div class="legend-item" data-legend-for="rental">
+            <span class="legend-title">Average net rent (€/m²)</span>
+            <div class="legend-scale rent-scale" role="img" aria-label="Gradient from 1.48 euros per square meter, green, to 41.17 euros per square meter, red"></div>
+            <div class="legend-endpoints"><span>€1.48</span><span>€41.17</span></div>
+          </div>
         </div>
         <h3>MOST GENTRIFIED</h3>
         <div class="buttonBox">
@@ -82,6 +94,9 @@
         </div>
       </div>
       <div id="map"></div>
+    </div>
+    <div class="footer">
+      <p id="credits">This project was developed at Data Dreams Summer School by Carla Deyerberg, Helena Grzembke, Jihye Jeong, Azranur Enon, Liliana Amundaraín</p>
     </div>
   </div>
 
