@@ -68,6 +68,8 @@ const CUSTOM_CATEGORY_COLOR = '#6E29C1';
 const PLACED_PREVIEW_SOURCE_ID = 'placed-points-preview';
 const PLACED_PREVIEW_LAYER_ID = 'placed-points-preview-layer';
 const PREVIEW_HIDE_DELAY_MS = 3000;
+const AREA_MAP_CLICK_LOCK_MS = 3000;
+const SEARCH_SCROLL_DELAY_MS = 500;
 
 let visiblePreviewPointsData = { type: 'FeatureCollection', features: [] };
 const previewHideTimers = new Map();
@@ -140,6 +142,12 @@ areaMap.on('load', () => {
     areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.svg") 16 16, auto';
 
     areaMap.on('click', (event) => {
+        const areaMapContainer = areaMap.getContainer();
+        areaMapContainer.style.pointerEvents = 'none';
+        setTimeout(() => {
+            areaMapContainer.style.pointerEvents = '';
+        }, AREA_MAP_CLICK_LOCK_MS);
+
         const feature = {
             id: `custom-point-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             type: 'Feature',
@@ -156,6 +164,9 @@ areaMap.on('load', () => {
         updateAreaMapPreview();
         schedulePreviewHide(feature.id);
         updateCustomCategoryOnMainMap();
+        setTimeout(() => {
+            document.querySelector('.search-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, SEARCH_SCROLL_DELAY_MS);
     });
 
     renderNewPointsControls();
