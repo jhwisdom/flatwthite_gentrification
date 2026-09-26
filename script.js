@@ -68,6 +68,8 @@ const CUSTOM_CATEGORY_COLOR = '#6E29C1';
 const PLACED_PREVIEW_SOURCE_ID = 'placed-points-preview';
 const PLACED_PREVIEW_LAYER_ID = 'placed-points-preview-layer';
 const PREVIEW_HIDE_DELAY_MS = 3000;
+const AREA_MAP_CLICK_LOCK_MS = 3000;
+const SEARCH_SCROLL_DELAY_MS = 500;
 
 let visiblePreviewPointsData = { type: 'FeatureCollection', features: [] };
 const previewHideTimers = new Map();
@@ -137,9 +139,15 @@ areaMap.on('load', () => {
         },
     }, beforeId);
 
-    areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.svg") 16 16, auto';
+    areaMap.getCanvas().style.cursor = 'url("DATADREAMS_icon_1.png") 16 16, auto';
 
     areaMap.on('click', (event) => {
+        const areaMapContainer = areaMap.getContainer();
+        areaMapContainer.style.pointerEvents = 'none';
+        setTimeout(() => {
+            areaMapContainer.style.pointerEvents = '';
+        }, AREA_MAP_CLICK_LOCK_MS);
+
         const feature = {
             id: `custom-point-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             type: 'Feature',
@@ -156,47 +164,11 @@ areaMap.on('load', () => {
         updateAreaMapPreview();
         schedulePreviewHide(feature.id);
         updateCustomCategoryOnMainMap();
+        setTimeout(() => {
+            document.querySelector('.search-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, SEARCH_SCROLL_DELAY_MS);
     });
-
-    renderNewPointsControls();
 });
-
-function undoLastCustomPoint() {
-    const removedPoint = customPointsData.features.pop();
-    if (removedPoint && removedPoint.id) removePreviewPoint(removedPoint.id);
-    saveCustomPointsToStorage();
-    updateCustomCategoryOnMainMap();
-}
-
-function clearCustomPoints() {
-    customPointsData = { type: 'FeatureCollection', features: [] };
-    previewHideTimers.forEach(timer => clearTimeout(timer));
-    previewHideTimers.clear();
-    visiblePreviewPointsData = { type: 'FeatureCollection', features: [] };
-    saveCustomPointsToStorage();
-    updateAreaMapPreview();
-    updateCustomCategoryOnMainMap();
-}
-
-// Minimal auto-generated buttons under the area map. Replace with your
-// own markup/placement once you've designed it.
-function renderNewPointsControls() {
-    const container = document.createElement('div');
-    container.id = 'new-points-controls';
-
-    const undoBtn = document.createElement('button');
-    undoBtn.textContent = 'Undo last';
-    undoBtn.addEventListener('click', undoLastCustomPoint);
-
-    const clearBtn = document.createElement('button');
-    clearBtn.textContent = 'Clear all';
-    clearBtn.addEventListener('click', clearCustomPoints);
-
-    container.appendChild(undoBtn);
-    container.appendChild(clearBtn);
-
-    document.querySelector('.areas').appendChild(container);
-}
 
 // ---------------------------------------------------------------
 // Finds the first label ("symbol") layer in the style. Inserting our
@@ -282,6 +254,8 @@ function handleEnterButton() {
 function handleSearch(query) {
     document.getElementById("toolbox").scrollIntoView();
     renderFilteredPOIs(query);
+    map.setLayoutProperty(SEARCH_LAYER_ID, 'visibility', 'visible');
+    setMapToggleButtonState(searchResultsButton, true);
     updateSearchResultsButtonLabel();
 }
 
@@ -428,6 +402,9 @@ function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
             'circle-radius': 8,
             'circle-color': SEARCH_COLOR,
             'circle-opacity': 0.44,
+            'circle-stroke-color': '#000000',
+            'circle-stroke-width': 0.5,
+            'circle-stroke-opacity': 1,
         },
     }, beforeId);
 
@@ -511,6 +488,9 @@ function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
                 'circle-radius': 11,
                 'circle-color': category.color,
                 'circle-opacity': 0.65,
+                'circle-stroke-color': '#000000',
+                'circle-stroke-width': 0.5,
+                'circle-stroke-opacity': 1,
             },
         }, beforeId);
 

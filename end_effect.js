@@ -95,7 +95,7 @@ const GENTRIFY_BUSINESSES = [
                 const blackStop = clearStop + (1 - level) * 55; // % where it is fully black
                 const edgeAlpha = Math.min(1, 0.6 + level * 0.4);
                 if (level >= 1) {
-                    overlay.style.background = '#000';
+                    overlay.style.background = '#171717';
                 } else {
                     const stops = [];
                     for (let i = 0; i <= STOPS; i++) {

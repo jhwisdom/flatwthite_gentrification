@@ -61,10 +61,15 @@ html, body {
   margin: 0;
   scroll-behavior: smooth;
   font-family: "Encode Sans Condensed", sans-serif;
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 * {
-  cursor: url("DATADREAMS_icon_1.svg") 16 16, auto !important;
+  cursor: url("DATADREAMS_icon_1.png") 16 16, auto !important;
 }
 
 .app {
@@ -232,6 +237,7 @@ button {
 .legend-item {
   display: none;
   min-width: 0;
+  margin-right: 20px;
 }
 
 .legend-item.is-visible {
