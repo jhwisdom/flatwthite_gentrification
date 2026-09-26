@@ -200,7 +200,6 @@ button {
 }
 
 #map {
-  margin: 20px;
   flex: 1; /* takes up all remaining horizontal space */
   height: 700px;
 }
@@ -246,4 +245,15 @@ button {
     width: 20px;
     height: 20px;
     border-radius: 50%;
+}
+
+#notes {
+  margin-top: 100px;
+  margin-left: 20px;
+}
+
+.note {
+  color: #171717;
+  font-size: 10px;
+  margin: 0px;
 }
