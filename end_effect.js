@@ -38,7 +38,7 @@ const GENTRIFY_BUSINESSES = [
     const message = document.createElement('p');
     message.id = 'gentrify-message';
     message.setAttribute('role', 'status');
-    message.textContent = `This site is gentrified. Now it is under construction of ${business}.`;
+    message.textContent = `This site is gentrified. Now under construction of ${business}.`;
 
     // Countdown shown under the message (20 ... 0), then the page starts over.
     const countdown = document.createElement('p');
