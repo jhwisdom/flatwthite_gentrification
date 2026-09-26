@@ -8,8 +8,8 @@ const map = new maplibregl.Map({
     container: 'map',
     style: MAPTILER_STYLE_URL,
     center: FRANKFURT_CENTER,
-    zoom: 12,
-    minZoom: 13,
+    zoom: 12.5,
+    minZoom: 12,
     maxZoom: 17,
     dragPan: false,
     scrollZoom: false,
@@ -32,9 +32,10 @@ map.on('load', () => {
         fetch('poi_frankfurt_points2.geojson').then(res => res.json()),
         fetch('location_areas.geojson').then(res => res.json()),
         fetch('leerstandsmelder.geojson').then(res => res.json()),
-    ]).then(([poi, locationAreas, vacancies]) => {
+        fetch('nettokaltmiete.geojson').then(res => res.json()),
+    ]).then(([poi, locationAreas, vacancies, rentalPrices]) => {
         poiData = poi;
-        setupPointLayers(locationAreas, vacancies); // build all layers once both datasets are ready
+        setupPointLayers(locationAreas, vacancies, rentalPrices); // build all layers once both datasets are ready
     });
 });
 
@@ -62,7 +63,7 @@ const areaMap = new maplibregl.Map({
 const CUSTOM_POINTS_STORAGE_KEY = 'customPlacedPoints';
 const CUSTOM_CATEGORY_KEY = 'custom';
 const CUSTOM_CATEGORY_LABEL = 'My Points';
-const CUSTOM_CATEGORY_COLOR = '#FF6B6B70';
+const CUSTOM_CATEGORY_COLOR = '#6E29C1';
 
 const PLACED_PREVIEW_SOURCE_ID = 'placed-points-preview';
 const PLACED_PREVIEW_LAYER_ID = 'placed-points-preview-layer';
@@ -130,8 +131,9 @@ areaMap.on('load', () => {
         type: 'circle',
         source: PLACED_PREVIEW_SOURCE_ID,
         paint: {
-            'circle-radius': 20,
+            'circle-radius': 15,
             'circle-color': CUSTOM_CATEGORY_COLOR,
+            'circle-opacity': 1,
         },
     }, beforeId);
 
@@ -214,18 +216,30 @@ let poiData = null; // holds the raw geojson once loaded
 // ---------------------------------------------------------------
 // Search bar — ONE fixed color, replaces its own points each search
 // ---------------------------------------------------------------
-const SEARCH_COLOR = '#A08BFD70'; // change this to whatever color you want search results to be
+const SEARCH_COLOR = '#A08BFD';
 const SEARCH_SOURCE_ID = 'search-points';
 const SEARCH_LAYER_ID = 'search-points-layer';
 const LOCATION_AREAS_SOURCE_ID = 'location-areas';
 const LOCATION_AREAS_FILL_LAYER_ID = 'location-areas-fill';
 const LOCATION_AREAS_LINE_LAYER_ID = 'location-areas-line';
+const RENTAL_PRICES_SOURCE_ID = 'rental-prices';
+const RENTAL_PRICES_FILL_LAYER_ID = 'rental-prices-fill';
+const RENTAL_PRICES_LINE_LAYER_ID = 'rental-prices-line';
 const LOCATION_AREAS_COLOR = [
     'interpolate',
     ['linear'],
     ['to-number', ['get', 'location_class']],
-    1, '#fb0202',
-    10, '#00fd08',
+    1, '#2FC4FF',
+    10, '#DB5DCE',
+];
+const RENTAL_PRICES_COLOR = [
+    'interpolate',
+    ['linear'],
+    ['to-number', ['get', 'value']],
+    1.48, '#2d2aee',
+    12, '#d2f547',
+    25, '#f9484b',
+    41.17, '#ad121a',
 ];
 
 function matchesQuery(feature, query) {
@@ -277,14 +291,14 @@ function handleSearch(query) {
 // Edit this list once you know your real categories + match rules.
 // ---------------------------------------------------------------
 const CATEGORIES = [
-    { key: 'coffee', label: 'Coffee', color: '#FF9ECB70', match: f => f.properties?.amenity === 'cafe' || f.properties?.cuisine === 'coffee_shop' || matchesQuery(f, 'coffee') },
-    { key: 'winebar', label: 'Winebar', color: '#E7B45B70', match: f => ['winebar', 'wine bar', 'weinbar', 'wein bar'].some(term => matchesQuery(f, term)) },
-    { key: 'pilates', label: 'Pilates', color: '#B2DB5D70', match: f => f.properties?.sport === 'pilates' || matchesQuery(f, 'pilates') },
-    { key: 'gallery', label: 'Gallery', color: '#C59A7070', match: f => f.properties?.tourism === 'gallery' || matchesQuery(f, 'gallery') },
-    { key: 'coworking', label: 'Coworking', color: '#7CB8A870', match: f => f.properties?.office === 'coworking' || matchesQuery(f, 'coworking') },
-    { key: 'delicatesse', label: 'Delicatesse', color: '#D8A16A70', match: f => ['deli', 'delicatessen'].includes(f.properties?.shop) || matchesQuery(f, 'delicatessen') },
-    { key: 'design', label: 'Design', color: '#8DA6C970', match: f => matchesQuery(f, 'design') },
-    { key: 'bike', label: 'Bike', color: '#2FC4FF70', match: f => matchesQuery(f, 'bike') },
+    { key: 'coffee', label: 'Coffee', color: '#99E73C', match: f => f.properties?.amenity === 'cafe' || f.properties?.cuisine === 'coffee_shop' || matchesQuery(f, 'coffee') },
+    { key: 'winebar', label: 'Winebar', color: '#F68486', match: f => ['winebar', 'wine bar', 'weinbar', 'wein bar'].some(term => matchesQuery(f, term)) },
+    { key: 'pilates', label: 'Pilates', color: '#2FC4FF', match: f => f.properties?.sport === 'pilates' || matchesQuery(f, 'pilates') },
+    { key: 'gallery', label: 'Gallery', color: '#DB5DCE', match: f => f.properties?.tourism === 'gallery' || matchesQuery(f, 'gallery') },
+    { key: 'coworking', label: 'Coworking', color: '#FF9ECB', match: f => f.properties?.office === 'coworking' || matchesQuery(f, 'coworking') },
+    { key: 'delicatesse', label: 'Delicatesse', color: '#3D4E0A', match: f => ['deli', 'delicatessen'].includes(f.properties?.shop) || matchesQuery(f, 'delicatessen') },
+    { key: 'design', label: 'Design', color: '#DFC269', match: f => matchesQuery(f, 'design') },
+    { key: 'bike', label: 'Bike', color: '#4CD6FF', match: f => matchesQuery(f, 'bike') },
 ];
 
 const categoryActive = {}; // key -> boolean
@@ -307,6 +321,13 @@ function toggleWohnlage() {
     map.setLayoutProperty(LOCATION_AREAS_LINE_LAYER_ID, 'visibility', visibility);
 }
 
+function toggleRentalPrices() {
+    const isVisible = map.getLayoutProperty(RENTAL_PRICES_FILL_LAYER_ID, 'visibility') !== 'none';
+    const visibility = isVisible ? 'none' : 'visible';
+    map.setLayoutProperty(RENTAL_PRICES_FILL_LAYER_ID, 'visibility', visibility);
+    map.setLayoutProperty(RENTAL_PRICES_LINE_LAYER_ID, 'visibility', visibility);
+}
+
 function toggleSearchResults() {
     const isVisible = map.getLayoutProperty(SEARCH_LAYER_ID, 'visibility') !== 'none';
     map.setLayoutProperty(SEARCH_LAYER_ID, 'visibility', isVisible ? 'none' : 'visible');
@@ -317,6 +338,8 @@ function getMapToggleVisibility(key) {
         ? SEARCH_LAYER_ID
         : key === 'wohnlage'
             ? LOCATION_AREAS_FILL_LAYER_ID
+            : key === 'rental'
+                ? RENTAL_PRICES_FILL_LAYER_ID
             : categoryLayerId(key);
     return map.getLayoutProperty(layerId, 'visibility') !== 'none';
 }
@@ -326,16 +349,24 @@ function setMapToggleButtonState(button, isActive) {
     button.setAttribute('aria-pressed', String(isActive));
 }
 
+function syncCityDataLegend() {
+        document.querySelectorAll('[data-legend-for]').forEach(legend => {
+                const key = legend.dataset.legendFor;
+                legend.classList.toggle('is-visible', getMapToggleVisibility(key));
+        });
+}
+
 function getMapToggleColor(key) {
-    if (key === 'wohnlage') return '#3d3d3d';
+    if (key === 'wohnlage') return '#00A7A0';
+    if (key === 'rental') return '#F68486';
     const color = key === 'search'
         ? SEARCH_COLOR
         : key === CUSTOM_CATEGORY_KEY
             ? CUSTOM_CATEGORY_COLOR
             : key === 'vacancies'
-                ? '#F4C95D'
-            : CATEGORIES.find(category => category.key === key)?.color || '#171717';
-    return color.length === 9 ? color.slice(0, 7) : color;
+                ? '#f90303'
+            : CATEGORIES.find(category => category.key === key)?.color || '#B2DB5D';
+    return color;
 }
 
 function bindMapToggleButtons() {
@@ -345,12 +376,28 @@ function bindMapToggleButtons() {
         setMapToggleButtonState(button, getMapToggleVisibility(key));
         button.addEventListener('click', () => {
             if (key === 'search') toggleSearchResults();
-            else if (key === 'wohnlage') toggleWohnlage();
+            else if (key === 'wohnlage') {
+                if (!getMapToggleVisibility(key)) {
+                    map.setLayoutProperty(RENTAL_PRICES_FILL_LAYER_ID, 'visibility', 'none');
+                    map.setLayoutProperty(RENTAL_PRICES_LINE_LAYER_ID, 'visibility', 'none');
+                    setMapToggleButtonState(document.querySelector('[data-map-toggle="rental"]'), false);
+                }
+                toggleWohnlage();
+            } else if (key === 'rental') {
+                if (!getMapToggleVisibility(key)) {
+                    map.setLayoutProperty(LOCATION_AREAS_FILL_LAYER_ID, 'visibility', 'none');
+                    map.setLayoutProperty(LOCATION_AREAS_LINE_LAYER_ID, 'visibility', 'none');
+                    setMapToggleButtonState(document.querySelector('[data-map-toggle="wohnlage"]'), false);
+                }
+                toggleRentalPrices();
+            }
             else toggleCategory(key);
 
             setMapToggleButtonState(button, getMapToggleVisibility(key));
+            syncCityDataLegend();
         });
     });
+    syncCityDataLegend();
 }
 
 function updateSearchResultsButtonLabel() {
@@ -364,7 +411,7 @@ function updateSearchResultsButtonLabel() {
 // and POI data are both ready. Everything starts empty/hidden and
 // gets filled in by search or turned on by category toggles.
 // ---------------------------------------------------------------
-function setupPointLayers(locationAreasData, vacanciesData) {
+function setupPointLayers(locationAreasData, vacanciesData, rentalPricesData) {
     const beforeId = getFirstSymbolLayerId(map);
 
     // search layer — starts empty, filled in on each search
@@ -378,8 +425,9 @@ function setupPointLayers(locationAreasData, vacanciesData) {
         source: SEARCH_SOURCE_ID,
         layout: { visibility: 'none' },
         paint: {
-            'circle-radius': 20,
+            'circle-radius': 8,
             'circle-color': SEARCH_COLOR,
+            'circle-opacity': 0.44,
         },
     }, beforeId);
 
@@ -401,7 +449,30 @@ function setupPointLayers(locationAreasData, vacanciesData) {
         source: LOCATION_AREAS_SOURCE_ID,
         layout: { visibility: 'none' },
         paint: {
-            'line-color': '#3d3d3d',
+            'line-color': '#00A7A0',
+            'line-opacity': 0.45,
+            'line-width': 1,
+        },
+    }, beforeId);
+
+    map.addSource(RENTAL_PRICES_SOURCE_ID, { type: 'geojson', data: rentalPricesData });
+    map.addLayer({
+        id: RENTAL_PRICES_FILL_LAYER_ID,
+        type: 'fill',
+        source: RENTAL_PRICES_SOURCE_ID,
+        layout: { visibility: 'none' },
+        paint: {
+            'fill-color': RENTAL_PRICES_COLOR,
+            'fill-opacity': 0.65,
+        },
+    }, beforeId);
+    map.addLayer({
+        id: RENTAL_PRICES_LINE_LAYER_ID,
+        type: 'line',
+        source: RENTAL_PRICES_SOURCE_ID,
+        layout: { visibility: 'none' },
+        paint: {
+            'line-color': '#8E2F37',
             'line-opacity': 0.45,
             'line-width': 1,
         },
@@ -414,9 +485,10 @@ function setupPointLayers(locationAreasData, vacanciesData) {
         source: categorySourceId('vacancies'),
         layout: { visibility: 'none' },
         paint: {
+            'circle-color': '#000000',
             'circle-radius': 5,
             'circle-opacity': 0,
-            'circle-stroke-color': '#171717',
+            'circle-stroke-color': '#000000',
             'circle-stroke-width': 1.5,
             'circle-stroke-opacity': 1,
         },
@@ -436,8 +508,9 @@ function setupPointLayers(locationAreasData, vacanciesData) {
             source: categorySourceId(category.key),
             layout: { visibility: 'none' },
             paint: {
-                'circle-radius': 20,
+                'circle-radius': 11,
                 'circle-color': category.color,
+                'circle-opacity': 0.65,
             },
         }, beforeId);
 
@@ -453,8 +526,9 @@ function setupPointLayers(locationAreasData, vacanciesData) {
         source: categorySourceId(CUSTOM_CATEGORY_KEY),
         layout: { visibility: 'none' },
         paint: {
-            'circle-radius': 20,
+            'circle-radius': 11,
             'circle-color': CUSTOM_CATEGORY_COLOR,
+            'circle-opacity': 0.65,
         },
     }, beforeId);
     categoryActive[CUSTOM_CATEGORY_KEY] = false;
