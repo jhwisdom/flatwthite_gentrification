@@ -346,6 +346,7 @@ button {
   opacity: 0;
   pointer-events: none;
   transition: opacity 1.2s ease 0.3s;
+  white-space: pre-line; /* show \n in the text as a line break */
 }
 
 #gentrify-message.is-visible {
