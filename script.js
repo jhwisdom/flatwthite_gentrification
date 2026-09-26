@@ -31,9 +31,10 @@ map.on('load', () => {
     Promise.all([
         fetch('poi_frankfurt_points2.geojson').then(res => res.json()),
         fetch('location_areas.geojson').then(res => res.json()),
-    ]).then(([poi, locationAreas]) => {
+        fetch('leerstandsmelder.geojson').then(res => res.json()),
+    ]).then(([poi, locationAreas, vacancies]) => {
         poiData = poi;
-        setupPointLayers(locationAreas); // build all layers once both datasets are ready
+        setupPointLayers(locationAreas, vacancies); // build all layers once both datasets are ready
     });
 });
 
@@ -232,7 +233,8 @@ function matchesQuery(feature, query) {
     const props = feature.properties || {};
     const haystack = [
         props.name, props.shop, props.amenity, props.cuisine,
-        props.leisure, props.tourism, props.sport,
+        props.leisure, props.tourism, props.sport, props.office,
+        props.craft, props.brand,
     ].filter(Boolean).join(' ').toLowerCase();
     return haystack.includes(query.toLowerCase());
 }
@@ -264,7 +266,7 @@ function handleEnterButton() {
 }
 
 function handleSearch(query) {
-    window.scrollTo(0, 700);
+    document.getElementById("toolbox").scrollIntoView();
     renderFilteredPOIs(query);
     updateSearchResultsButtonLabel();
 }
@@ -275,13 +277,18 @@ function handleSearch(query) {
 // Edit this list once you know your real categories + match rules.
 // ---------------------------------------------------------------
 const CATEGORIES = [
-    { key: 'pilates', label: 'Pilates', color: '#B2DB5D70', match: f => matchesQuery(f, 'pilates') },
+    { key: 'coffee', label: 'Coffee', color: '#FF9ECB70', match: f => f.properties?.amenity === 'cafe' || f.properties?.cuisine === 'coffee_shop' || matchesQuery(f, 'coffee') },
+    { key: 'winebar', label: 'Winebar', color: '#E7B45B70', match: f => ['winebar', 'wine bar', 'weinbar', 'wein bar'].some(term => matchesQuery(f, term)) },
+    { key: 'pilates', label: 'Pilates', color: '#B2DB5D70', match: f => f.properties?.sport === 'pilates' || matchesQuery(f, 'pilates') },
+    { key: 'gallery', label: 'Gallery', color: '#C59A7070', match: f => f.properties?.tourism === 'gallery' || matchesQuery(f, 'gallery') },
+    { key: 'coworking', label: 'Coworking', color: '#7CB8A870', match: f => f.properties?.office === 'coworking' || matchesQuery(f, 'coworking') },
+    { key: 'delicatesse', label: 'Delicatesse', color: '#D8A16A70', match: f => ['deli', 'delicatessen'].includes(f.properties?.shop) || matchesQuery(f, 'delicatessen') },
+    { key: 'design', label: 'Design', color: '#8DA6C970', match: f => matchesQuery(f, 'design') },
     { key: 'bike', label: 'Bike', color: '#2FC4FF70', match: f => matchesQuery(f, 'bike') },
-    { key: 'cafe', label: 'Cafés', color: '#FF9ECB70', match: f => matchesQuery(f, 'cafe') },
 ];
 
 const categoryActive = {}; // key -> boolean
-let searchResultsButton = null;
+const searchResultsButton = document.querySelector('[data-map-toggle="search"]');
 
 function categorySourceId(key) { return `category-${key}-points`; }
 function categoryLayerId(key) { return `category-${key}-points-layer`; }
@@ -305,6 +312,47 @@ function toggleSearchResults() {
     map.setLayoutProperty(SEARCH_LAYER_ID, 'visibility', isVisible ? 'none' : 'visible');
 }
 
+function getMapToggleVisibility(key) {
+    const layerId = key === 'search'
+        ? SEARCH_LAYER_ID
+        : key === 'wohnlage'
+            ? LOCATION_AREAS_FILL_LAYER_ID
+            : categoryLayerId(key);
+    return map.getLayoutProperty(layerId, 'visibility') !== 'none';
+}
+
+function setMapToggleButtonState(button, isActive) {
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+}
+
+function getMapToggleColor(key) {
+    if (key === 'wohnlage') return '#3d3d3d';
+    const color = key === 'search'
+        ? SEARCH_COLOR
+        : key === CUSTOM_CATEGORY_KEY
+            ? CUSTOM_CATEGORY_COLOR
+            : key === 'vacancies'
+                ? '#F4C95D'
+            : CATEGORIES.find(category => category.key === key)?.color || '#171717';
+    return color.length === 9 ? color.slice(0, 7) : color;
+}
+
+function bindMapToggleButtons() {
+    document.querySelectorAll('[data-map-toggle]').forEach(button => {
+        const key = button.dataset.mapToggle;
+        button.style.setProperty('--map-toggle-color', getMapToggleColor(key));
+        setMapToggleButtonState(button, getMapToggleVisibility(key));
+        button.addEventListener('click', () => {
+            if (key === 'search') toggleSearchResults();
+            else if (key === 'wohnlage') toggleWohnlage();
+            else toggleCategory(key);
+
+            setMapToggleButtonState(button, getMapToggleVisibility(key));
+        });
+    });
+}
+
 function updateSearchResultsButtonLabel() {
     if (searchResultsButton) {
         searchResultsButton.textContent = input.value.trim() || 'Search results';
@@ -316,7 +364,7 @@ function updateSearchResultsButtonLabel() {
 // and POI data are both ready. Everything starts empty/hidden and
 // gets filled in by search or turned on by category toggles.
 // ---------------------------------------------------------------
-function setupPointLayers(locationAreasData) {
+function setupPointLayers(locationAreasData, vacanciesData) {
     const beforeId = getFirstSymbolLayerId(map);
 
     // search layer — starts empty, filled in on each search
@@ -328,6 +376,7 @@ function setupPointLayers(locationAreasData) {
         id: SEARCH_LAYER_ID,
         type: 'circle',
         source: SEARCH_SOURCE_ID,
+        layout: { visibility: 'none' },
         paint: {
             'circle-radius': 20,
             'circle-color': SEARCH_COLOR,
@@ -355,6 +404,21 @@ function setupPointLayers(locationAreasData) {
             'line-color': '#3d3d3d',
             'line-opacity': 0.45,
             'line-width': 1,
+        },
+    }, beforeId);
+
+    map.addSource(categorySourceId('vacancies'), { type: 'geojson', data: vacanciesData });
+    map.addLayer({
+        id: categoryLayerId('vacancies'),
+        type: 'circle',
+        source: categorySourceId('vacancies'),
+        layout: { visibility: 'none' },
+        paint: {
+            'circle-radius': 5,
+            'circle-opacity': 0,
+            'circle-stroke-color': '#171717',
+            'circle-stroke-width': 1.5,
+            'circle-stroke-opacity': 1,
         },
     }, beforeId);
 
@@ -395,35 +459,9 @@ function setupPointLayers(locationAreasData) {
     }, beforeId);
     categoryActive[CUSTOM_CATEGORY_KEY] = false;
 
-    renderCategoryToolbox();
+    bindMapToggleButtons();
 }
 
 // Minimal auto-generated buttons inside #toolbox, one per category plus
 // "My Points". Replace this with your own sidebar markup once it's
 // designed — just make sure each button calls toggleCategory('<key>').
-function renderCategoryToolbox() {
-    const toolbox = document.getElementById('toolbox');
-    toolbox.innerHTML = '';
-
-    const entries = [
-        { key: 'search', label: 'Search results', color: SEARCH_COLOR },
-        { key: 'wohnlage', label: 'Wohnlage areas', color: '#3d3d3d' },
-        ...CATEGORIES.map(c => ({ key: c.key, label: c.label, color: c.color })),
-        { key: CUSTOM_CATEGORY_KEY, label: CUSTOM_CATEGORY_LABEL, color: CUSTOM_CATEGORY_COLOR },
-    ];
-
-    entries.forEach(entry => {
-        const btn = document.createElement('button');
-        btn.textContent = entry.key === 'search'
-            ? input.value.trim() || entry.label
-            : entry.label;
-        btn.style.borderLeft = `6px solid ${entry.color}`;
-        btn.addEventListener('click', () => {
-            if (entry.key === 'search') toggleSearchResults();
-            else if (entry.key === 'wohnlage') toggleWohnlage();
-            else toggleCategory(entry.key);
-        });
-        if (entry.key === 'search') searchResultsButton = btn;
-        toolbox.appendChild(btn);
-    });
-}

@@ -49,31 +49,36 @@
       <h2>WHAT IS AN INDICATOR FOR</h2>
       <h1>GENTRIFICATION?</h1>
       <input type="text" id="search" placeholder="Search (e.g., pilates)" />
-      <button id="enterButton" onclick="handleEnterButton()">enter</button>
+      <button id="enterButton" onclick="handleEnterButton()">SUBMIT</button>
     </div>
 
     <div class="content">
       <div id="toolbox">
         <h3>INDICATORS</h3>
         <div class="buttonBox">
-          <button id="button1">your search</button>
-          <button id="button2">coffee</button>
-          <button id="button3">winebar</button>
-          <button id="button4">pilates studio</button>
-          <button id="button5">galery</button>
-          <button id="button6">coworking</button>
-          <button id="button7">delicatesse</button>
-          <button id="button8">design</button>
+          <button id="button1" class="map-toggle" data-map-toggle="search" type="button" aria-pressed="false">your search</button>
+          <button id="button2" class="map-toggle" data-map-toggle="coffee" type="button" aria-pressed="false">coffee</button>
+          <button id="button3" class="map-toggle" data-map-toggle="winebar" type="button" aria-pressed="false">winebar</button>
+          <button id="button4" class="map-toggle" data-map-toggle="pilates" type="button" aria-pressed="false">pilates studio</button>
+          <button id="button5" class="map-toggle" data-map-toggle="gallery" type="button" aria-pressed="false">gallery</button>
+          <button id="button6" class="map-toggle" data-map-toggle="coworking" type="button" aria-pressed="false">coworking</button>
+          <button id="button7" class="map-toggle" data-map-toggle="delicatesse" type="button" aria-pressed="false">delicatesse</button>
+          <button id="button8" class="map-toggle" data-map-toggle="design" type="button" aria-pressed="false">design</button>
         </div>
         <h3>CITY DATA</h3>
         <div class="buttonBox">
-          <button id="buttonAddress">good address</button>
-          <button id="buttonVac">vacancy</button>
-          <button id="buttonRental">rental prizes</button>
+          <button id="buttonAddress" class="map-toggle" data-map-toggle="wohnlage" type="button" aria-pressed="false">good address*</button>
+          <button id="buttonVac" class="map-toggle" data-map-toggle="vacancies" type="button" aria-pressed="false">vacancies**</button>
+          <button id="buttonRental">rental prices***</button>
         </div>
         <h3>MOST GENTRIFIED</h3>
         <div class="buttonBox">
-          <button id="buttonOpinions">See all Votes</button>
+          <button id="buttonOpinions" class="map-toggle" data-map-toggle="custom" type="button" aria-pressed="false">See all Votes</button>
+        </div>
+        <div id="notes">
+          <p class="note">*according to <link link="https://frankfurt.de/service-und-rathaus/verwaltung/publikationen/amt-fuer-wohnungswesen/mietspiegel-frankfurt-am-main">Wohnlagenverzeichnis</link> der Stadt Frankfurt</p>
+          <p class="note">**according to <link link="https://leerstandsmelder.de/frankfurt">Leerstandsmelder.de</link></p>
+          <p class="note">***according to <link link="https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Zensus2022/_inhalt.html">Statistisches Bundesamt</link></p>
         </div>
       </div>
       <div id="map"></div>
