@@ -212,6 +212,11 @@ button {
   border-color: #171717;
 }
 
+#toolbox .map-toggle[data-map-toggle="delicatesse"].is-active {
+  color: white;
+}
+
+#toolbox .map-toggle[data-map-toggle="custom"].is-active,
 #toolbox .map-toggle[data-map-toggle="vacancies"].is-active,
 #toolbox .map-toggle[data-map-toggle="rental"].is-active,
 #toolbox .map-toggle[data-map-toggle="wohnlage"].is-active {
